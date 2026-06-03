@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://c16jtofaqa2on"]
+
+[ext_resource type="Script" uid="uid://b4mtlpgydnava" path="res://scripts/field.gd" id="1_7156t"]
+[ext_resource type="PackedScene" uid="uid://bavgecjlqx1id" path="res://scenes/player.tscn" id="1_ttalb"]
+[ext_resource type="Texture2D" uid="uid://clsnsl6vy73vx" path="res://assets/ground.png" id="2_lptdg"]
+[ext_resource type="Texture2D" uid="uid://y7cg2ky5blt6" path="res://assets/river.png" id="3_lptdg"]
+[ext_resource type="Texture2D" uid="uid://dsf613jjjlv2r" path="res://assets/cast_target.png" id="5_pn4dk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pn4dk"]
+size = Vector2(1840, 120)
+
+[node name="Field" type="Node2D" unique_id=1449960165]
+script = ExtResource("1_7156t")
+
+[node name="BiteTimer" type="Timer" parent="." unique_id=1196276400]
+wait_time = 3.0
+one_shot = true
+
+[node name="Ground" type="Sprite2D" parent="." unique_id=2047650567]
+scale = Vector2(4, 4)
+texture = ExtResource("2_lptdg")
+
+[node name="River" type="Sprite2D" parent="." unique_id=1868549744]
+scale = Vector2(4, 3)
+texture = ExtResource("3_lptdg")
+
+[node name="FishingArea" type="Area2D" parent="." unique_id=1130841166]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FishingArea" unique_id=1699014171]
+position = Vector2(-1, -160)
+shape = SubResource("RectangleShape2D_pn4dk")
+
+[node name="Player" parent="." unique_id=213302670 instance=ExtResource("1_ttalb")]
+
+[node name="CastLine" type="Line2D" parent="." unique_id=1334801313]
+visible = false
+width = 4.0
+
+[node name="CastTarget" type="Sprite2D" parent="." unique_id=66950259]
+visible = false
+texture = ExtResource("5_pn4dk")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=939264345]
+
+[node name="FishingPrompt" type="Label" parent="UI" unique_id=2137453634]
+visible = false
+offset_left = 500.0
+offset_top = 150.0
+offset_right = 622.0
+offset_bottom = 173.0
+text = "Aボタンで釣り開始"
+
+[node name="TensionLabel" type="Label" parent="UI" unique_id=1667868421]
+offset_left = 360.0
+offset_top = 50.0
+offset_right = 400.0
+offset_bottom = 73.0
+text = "テンション"
+
+[node name="FightBar" type="ProgressBar" parent="UI" unique_id=362808524]
+visible = false
+offset_left = 450.0
+offset_top = 50.0
+offset_right = 750.0
+offset_bottom = 77.0
+
+[node name="DistanceLabel" type="Label" parent="UI" unique_id=661990333]
+offset_left = 360.0
+offset_top = 90.0
+offset_right = 400.0
+offset_bottom = 113.0
+text = "距離"
+
+[node name="DistanceBar" type="ProgressBar" parent="UI" unique_id=1685624609]
+visible = false
+offset_left = 450.0
+offset_top = 90.0
+offset_right = 750.0
+offset_bottom = 117.0
+value = 100.0
+
+[node name="MoneyLabel" type="Label" parent="UI" unique_id=576302200]
+offset_right = 82.0
+offset_bottom = 23.0
+text = "所持金: 0円"
+
+[node name="RecordPanel" type="Panel" parent="UI" unique_id=1801507761]
+visible = false
+offset_left = 200.0
+offset_top = 100.0
+offset_right = 800.0
+offset_bottom = 500.0
+
+[node name="RecordLabel" type="Label" parent="UI/RecordPanel" unique_id=1121105757]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 60.0
+offset_bottom = 43.0
+
+[connection signal="timeout" from="BiteTimer" to="." method="_on_bite_timer_timeout"]
+[connection signal="body_entered" from="FishingArea" to="." method="_on_fishing_area_body_entered"]
+[connection signal="body_exited" from="FishingArea" to="." method="_on_fishing_area_body_exited"]

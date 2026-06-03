@@ -1,0 +1,29 @@
+[
+  {
+	"id": "yamame",
+	"name": "ヤマメ",
+	"min_size": 15,
+	"max_size": 35,
+	"base_weight": 120,
+	"sell_price": 300,
+	"rate": 40
+  },
+  {
+	"id": "ugui",
+	"name": "ウグイ",
+	"min_size": 10,
+	"max_size": 30,
+	"base_weight": 100,
+	"sell_price": 100,
+	"rate": 45
+  },
+  {
+	"id": "koi",
+	"name": "コイ",
+	"min_size": 30,
+	"max_size": 80,
+	"base_weight": 800,
+	"sell_price": 500,
+	"rate": 15
+  }
+]
