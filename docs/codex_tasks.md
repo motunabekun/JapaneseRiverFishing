@@ -293,6 +293,30 @@ var position: Vector2 = Vector2.ZERO
 
 ---
 
+## Godot CLI確認方法
+
+この環境ではGodot CLIは以下を使う。
+
+```text
+/mnt/c/Tools/Godot/Godot_v4.6.3-stable_win64_console.exe
+```
+
+Windows版Godotなので、`--path` にはWSL形式の `/mnt/c/...` ではなく、Windows形式のパスを渡す。
+
+```bash
+/mnt/c/Tools/Godot/Godot_v4.6.3-stable_win64_console.exe --headless --path 'C:\Users\motunabe\Documents\japanese-river-fishing' --quit-after 2
+```
+
+スクリプト単体の構文確認は `--check-only --script` を使う。
+
+```bash
+/mnt/c/Tools/Godot/Godot_v4.6.3-stable_win64_console.exe --headless --path 'C:\Users\motunabe\Documents\japanese-river-fishing' --check-only --script res://scripts/fish_manager.gd
+```
+
+Autoloadに依存する既存スクリプトは、単体 `--script` だと `GameState` などを解決できない場合がある。その場合はプロジェクト起動確認で見る。
+
+---
+
 ## 完了条件
 
 以下が確認できれば完了。

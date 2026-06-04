@@ -1,10 +1,17 @@
 extends Node
 
+# MVP用の魚種データベースです。
+# 現在は魚個体ではなく、data/fish_data.jsonから魚種を読み込んでランダム抽選します。
 var fish_list: Array = []
+
 
 func _ready() -> void:
 	load_fish_data()
 
+
+## 魚種データJSONを読み込み、抽選用リストへ保存します。
+## 引数: なし
+## 戻り値: なし
 func load_fish_data() -> void:
 	var file: FileAccess = FileAccess.open("res://data/fish_data.json", FileAccess.READ)
 
@@ -21,10 +28,16 @@ func load_fish_data() -> void:
 
 	fish_list = json_data as Array
 
+
+## rateに基づいてランダムな釣果データを作ります。
+## 引数: なし
+## 戻り値: 釣果データ。魚データがない場合は空のDictionary
 func get_random_fish() -> Dictionary:
 	if fish_list.is_empty():
 		return {}
 
+	# rateの合計値を作り、その中からランダムに1点を選ぶ加重抽選です。
+	# rateが高い魚ほど選ばれやすくなります。
 	var total_rate: int = 0
 
 	for fish: Dictionary in fish_list:
@@ -40,6 +53,10 @@ func get_random_fish() -> Dictionary:
 
 	return generate_catch(fish_list[0])
 
+
+## 魚種データから、サイズと重量を持つ釣果データを生成します。
+## 引数: fish 魚種データ
+## 戻り値: 釣果データ
 func generate_catch(fish: Dictionary) -> Dictionary:
 	var size: float = randf_range(float(fish["min_size"]), float(fish["max_size"]))
 	var weight: float = size / float(fish["max_size"]) * float(fish["base_weight"])

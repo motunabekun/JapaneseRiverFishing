@@ -1,14 +1,18 @@
 extends Node2D
 
+# プレイヤーが釣り可能エリアに入っているかどうかです。
 var player_in_fishing_area: bool = false
 
 @onready var fishing_prompt: Label = $UI/FishingPrompt
 
+# キャスト方向と距離です。方向は照準操作で更新されます。
 var cast_direction: Vector2 = Vector2.UP
 var cast_distance: float = 120.0
 
 @onready var cast_line: Line2D = $CastLine
 
+# 釣りの進行状態です。
+# NONE: 釣りしていない / AIMING: 狙い中 / CASTED: キャスト済み
 enum FishingMode {
 	NONE,
 	AIMING,
@@ -23,9 +27,12 @@ var cast_target_position: Vector2 = Vector2.ZERO
 
 var fish_hooked: bool = false
 
+# ファイト中に使う仮パラメータです。
+# line_tensionは糸の張り、fish_distanceは魚との距離を表します。
 var line_tension: float = 50.0
 var fish_distance: float = 100.0
 
+# この範囲を外れると、魚が逃げたりラインブレイクしたりします。
 const MIN_TENSION: float = 10.0
 const MAX_TENSION: float = 90.0
 
@@ -39,6 +46,7 @@ const MAX_TENSION: float = 90.0
 @onready var distance_label: Label = $UI/DistanceLabel
 
 func _ready() -> void:
+	# ゲーム開始時は、釣りに関係するUIを隠しておきます。
 	fishing_prompt.visible = false
 	cast_line.visible = false
 	cast_target.visible = false
@@ -53,6 +61,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	# _processは毎フレーム呼ばれます。入力受付やUI更新に向いています。
 	if Input.is_action_just_pressed("open_record"):
 		toggle_record_panel()
 	
@@ -63,6 +72,7 @@ func _process(_delta: float) -> void:
 		update_fight(_delta)
 		return
 
+	# アタリ中にactionを押すと「合わせ」成功としてファイトへ移行します。
 	if GameState.fish_biting:
 		if Input.is_action_just_pressed("action"):
 			GameState.end_bite()
@@ -90,6 +100,7 @@ func _process(_delta: float) -> void:
 		if fishing_mode == FishingMode.AIMING:
 			update_cast_direction()
 
+	# actionボタンは現在の釣り状態によって意味が変わります。
 	if player_in_fishing_area:
 		if Input.is_action_just_pressed("action"):
 			if not GameState.is_fishing:
@@ -100,6 +111,9 @@ func _process(_delta: float) -> void:
 				end_fishing()
 
 
+## 釣りを開始し、キャスト方向を決める状態へ移行します。
+## 引数: なし
+## 戻り値: なし
 func start_fishing() -> void:
 	GameState.start_fishing()
 	fishing_mode = FishingMode.AIMING
@@ -113,6 +127,9 @@ func start_fishing() -> void:
 	print("釣り開始！")
 
 
+## 釣りを終了し、表示と一時状態を初期状態に戻します。
+## 引数: なし
+## 戻り値: なし
 func end_fishing() -> void:
 	GameState.end_fishing()
 	fishing_mode = FishingMode.NONE
@@ -141,6 +158,7 @@ func end_fishing() -> void:
 
 
 func _on_fishing_area_body_entered(body: Node2D) -> void:
+	# Area2Dのbody_enteredシグナルから呼ばれます。
 	if body.name == "Player":
 		player_in_fishing_area = true
 		fishing_prompt.visible = true
@@ -149,12 +167,17 @@ func _on_fishing_area_body_entered(body: Node2D) -> void:
 
 
 func _on_fishing_area_body_exited(body: Node2D) -> void:
+	# 釣りエリアから出たら、釣り可能フラグを下げます。
 	if body.name == "Player":
 		player_in_fishing_area = false
 		GameState.end_fishing()
 		fishing_prompt.visible = false
 		print("釣りエリアから出た")
 
+
+## 照準入力からキャスト方向とキャストラインを更新します。
+## 引数: なし
+## 戻り値: なし
 func update_cast_direction() -> void:
 	var direction: Vector2 = Input.get_vector(
 		"look_left",
@@ -174,9 +197,14 @@ func update_cast_direction() -> void:
 	cast_line.add_point(start_pos)
 	cast_line.add_point(end_pos)
 
+
+## 現在のキャスト方向へ仕掛けを投げ、アタリ待ちを開始します。
+## 引数: なし
+## 戻り値: なし
 func cast_line_to_target() -> void:
 	var player: Node2D = $Player
 
+	# プレイヤー位置からキャスト方向へ一定距離進んだ地点を着水地点にします。
 	cast_target_position = player.global_position + cast_direction * cast_distance
 
 	cast_target.global_position = cast_target_position
@@ -196,6 +224,8 @@ func cast_line_to_target() -> void:
 
 
 func _on_bite_timer_timeout() -> void:
+	# Timerのtimeoutシグナルから呼ばれます。
+	# 現在は90%の確率でアタリが出る仮実装です。
 	if randi() % 100 < 90:
 		GameState.start_bite()
 		fishing_prompt.text = "アタリ！Aボタンで合わせろ！"
@@ -203,6 +233,10 @@ func _on_bite_timer_timeout() -> void:
 	else:
 		fishing_prompt.text = "魚は来なかった..."
 		
+
+## ファイト中のテンションと魚との距離を更新します。
+## 引数: delta 前フレームからの経過秒数
+## 戻り値: なし
 func update_fight(delta: float) -> void:
 	if Input.is_action_pressed("look_up"):
 		line_tension += 45.0 * delta
@@ -219,6 +253,7 @@ func update_fight(delta: float) -> void:
 		fish_escape("テンションが高すぎてラインブレイク！")
 		return
 
+	# 適正テンションなら魚を引き寄せ、外れていると距離が開いていきます。
 	if line_tension >= 40.0 and line_tension <= 80.0:
 		fish_distance -= 20.0 * delta
 	else:
@@ -232,6 +267,10 @@ func update_fight(delta: float) -> void:
 	if fish_distance <= 0.0:
 		catch_fish()
 
+
+## 魚を釣り上げ、釣果記録へ追加します。
+## 引数: なし
+## 戻り値: なし
 func catch_fish() -> void:
 	var caught_fish: Dictionary = FishDatabase.get_random_fish()
 
@@ -258,12 +297,20 @@ func catch_fish() -> void:
 	print(caught_fish)
 	print(CatchRecord.get_records())
 
+
+## 釣果一覧パネルの表示/非表示を切り替えます。
+## 引数: なし
+## 戻り値: なし
 func toggle_record_panel() -> void:
 	record_panel.visible = !record_panel.visible
 
 	if record_panel.visible:
 		update_record_panel()
 		
+
+## 釣果記録を画面表示用テキストに変換して更新します。
+## 引数: なし
+## 戻り値: なし
 func update_record_panel() -> void:
 	var text := "=== 釣果一覧 ===\n\n"
 	var records: Dictionary = CatchRecord.get_records()
@@ -276,9 +323,17 @@ func update_record_panel() -> void:
 
 	record_label.text = text
 
+
+## 所持金表示を現在のGameState.moneyに合わせて更新します。
+## 引数: なし
+## 戻り値: なし
 func update_money_label() -> void:
 	money_label.text = "所持金: %d円" % GameState.money
 
+
+## 未売却の釣果をすべて売却し、所持金へ加算します。
+## 引数: なし
+## 戻り値: なし
 func sell_all_fish() -> void:
 	var history: Array[Dictionary] = CatchRecord.get_history()
 
@@ -304,6 +359,10 @@ func sell_all_fish() -> void:
 
 	print("売却額: ", total_price)
 
+
+## ファイト失敗時の表示と状態を更新します。
+## 引数: message 画面に表示する失敗理由
+## 戻り値: なし
 func fish_escape(message: String) -> void:
 	fish_hooked = false
 
